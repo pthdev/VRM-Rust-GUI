@@ -1,5 +1,5 @@
 #!/bin/bash
-PROJECT_DIR="/home/vincent/Desktop/Repository/VRM-Rust-Workflow"
+PROJECT_DIR="/Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI"
 cd "$PROJECT_DIR" || exit 1
 
 # Defaults: run all tests, 20-second timeout
@@ -8,7 +8,7 @@ TIMEOUT_SECS="${2:-20}"
 
 echo "=== Running Cargo Tests ==="
 
-timeout "$TIMEOUT_SECS" cargo test "$TEST_FILTER" -- --nocapture
+cargo test "$TEST_FILTER" -- --nocapture
 TEST_STATUS=$?
 
 if [ $TEST_STATUS -eq 124 ]; then

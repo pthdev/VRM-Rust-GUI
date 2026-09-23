@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Project root directory
-PROJECT_DIR="/home/vincent/Desktop/Repository/VRM-Rust-Workflow"
+PROJECT_DIR="/Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI"
 
 # Jump into the repository
 cd "$PROJECT_DIR" || { echo "Error: Directory $PROJECT_DIR not found."; exit 1; }
@@ -14,7 +14,7 @@ LINE_LIMIT="${4:-20}"
 FILTER_PATTERNS="${5:-(Thread|Deadlock|Thread ID|Backtrace|DEBUG|ERROR)}"
 
 # Execute the pipeline
-timeout "$TIMEOUT_SECS" cargo run -- -f "$WORKFLOW_FILE" -c "$CONFIG_FILE" 2>&1 \
+gtimeout "$TIMEOUT_SECS" cargo run -- -f "$WORKFLOW_FILE" -c "$CONFIG_FILE" 2>&1 \
     | grep -Ei "$FILTER_PATTERNS" \
     | head -n "$LINE_LIMIT"
 

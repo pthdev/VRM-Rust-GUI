@@ -3,7 +3,7 @@
 set -e
 
 echo "=== Running Cargo Check ==="
-cd /home/vincent/Desktop/Repository/VRM-Rust-Workflow/ && cargo check --all-targets --all-features
+cd /Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI/ && cargo check --all-targets --all-features
 CHECK_STATUS=$?
 
 # echo "=== Running Cargo Clippy ==="

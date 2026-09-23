@@ -2,7 +2,7 @@
 # Verifies that removed legacy items have zero references in source code.
 # Usage: ./verify_removed.sh
 
-PROJECT_DIR="/home/vincent/Desktop/Repository/VRM-Rust-Workflow"
+PROJECT_DIR="/Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI"
 cd "$PROJECT_DIR" || exit 1
 
 ITEMS=("RMS_GATEWAY_NAME" "get_component_router_list")

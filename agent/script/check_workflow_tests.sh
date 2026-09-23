@@ -2,7 +2,7 @@
 # Runs workflow-related tests with a configurable timeout.
 # Usage: ./check_workflow_tests.sh [filter] [timeout_secs]
 
-PROJECT_DIR="/home/vincent/Desktop/Repository/VRM-Rust-Workflow"
+PROJECT_DIR="/Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI"
 cd "$PROJECT_DIR" || exit 1
 
 FILTER="${1:-workflow}"

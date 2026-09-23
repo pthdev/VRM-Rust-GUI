@@ -2,7 +2,7 @@
 # Shows files changed since last commit (or compared to a ref).
 # Usage: ./changed_files.sh [ref]
 
-PROJECT_DIR="/home/vincent/Desktop/Repository/VRM-Rust-Workflow"
+PROJECT_DIR="/Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI"
 cd "$PROJECT_DIR" || exit 1
 
 REF="${1:-HEAD}"

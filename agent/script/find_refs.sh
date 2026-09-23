@@ -2,7 +2,7 @@
 # Fast multi-pattern search across the source tree.
 # Usage: ./find_refs.sh "pattern1|pattern2|pattern3"
 
-PROJECT_DIR="/home/vincent/Desktop/Repository/VRM-Rust-Workflow"
+PROJECT_DIR="/Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI"
 cd "$PROJECT_DIR" || exit 1
 
 if [ -z "$1" ]; then

@@ -67,7 +67,7 @@
 //     println!("{:#?}", vrm_system_model);
 // #[test]
 // fn test_aci_commit() {
-//     let vrm_system_model = generate_vrm_model("/home/vincent/Desktop/Repository/VRM-Rust-Workflow/src/data/vrm.json");
+//     let vrm_system_model = generate_vrm_model("/Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI/src/data/vrm.json");
 //     let aci_01 = vrm_system_model.unwrap().acis.get(&AciId::new("AcI-001")).unwrap();
 //     let file_path: &str = "src/data/test/test_workflow_with_simple_co_allocation_graph.json";
 //     // let vrm = generate_system_model(file_path, true);

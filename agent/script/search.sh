@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJECT_DIR="/home/vincent/Desktop/Repository/VRM-Rust-Workflow"
+PROJECT_DIR="/Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI"
 
 if [ -z "$1" ]; then
     echo "Error: Please provide a search pattern."

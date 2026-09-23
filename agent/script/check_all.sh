@@ -4,7 +4,7 @@
 
 set -e
 
-PROJECT_DIR="/home/vincent/Desktop/Repository/VRM-Rust-Workflow"
+PROJECT_DIR="/Users/thieleone/Library/Mobile Documents/com~apple~CloudDocs/STUDIUM/BA_Bachelorarbeit/VRM-Rust-GUI"
 SCRIPT_DIR="$PROJECT_DIR/agent/script"
 
 echo "=== [1/2] Cargo Check ==="
