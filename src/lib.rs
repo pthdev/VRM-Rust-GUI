@@ -23,3 +23,4 @@ pub fn generate_system_model(file_path: &str, reservation_store: ReservationStor
 
     Ok(system_model)
 }
+pub mod web;

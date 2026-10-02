@@ -11,21 +11,17 @@ use clap::Parser;
 use parking_lot::{RwLock, deadlock};
 use std::sync::Arc;
 use std::thread;
-use self::vrm::global_clock::global_clock::GlobalClock;
+use std::time::Duration;
 
 use self::schema::vrm_dto::VrmDto;
 use self::vrm::client::client::Clients;
 use self::vrm::common::logging::logger;
 use self::vrm::common::logging::statistics::AnalyticsSystem;
-use crate::web::server::{start_web_server, AppState};
-use crate::web::ws_listener::WebsocketStateListener;
-use tokio::sync::{mpsc, broadcast};
-use std::time::Duration;
+use self::vrm::global_clock::global_clock::GlobalClock;
 
 pub mod error;
 pub mod loader;
 pub mod schema;
-pub mod web;
 pub mod vrm;
 
 pub fn get_vrm_dto(file_path: &str) -> Result<VrmDto> {
@@ -74,14 +70,7 @@ async fn main() {
     let file_path_workflows = &args.input_file;
     let file_path_vrm = &args.config_file;
 
-    let (ws_tx, _ws_rx) = broadcast::channel(100);
-    let (cmd_tx, cmd_rx) = mpsc::channel(100);
-
     let reservation_store = ReservationStore::new();
-    
-    let ws_listener = WebsocketStateListener { tx: ws_tx.clone() };
-    reservation_store.add_listener(Arc::new(RwLock::new(ws_listener)));
-    
     reservation_store.add_listener(Arc::new(RwLock::new(VrmStateListener::new_empty())));
 
     let vrm_dto = get_vrm_dto(file_path_vrm).expect("Failed to load VRM DTO");
@@ -92,24 +81,11 @@ async fn main() {
     let registry = RegistryClient::new();
     let simulator = Arc::new(GlobalClock::new(is_simulation));
 
-    let app_state = Arc::new(AppState {
-        reservation_store: reservation_store.clone(),
-        ws_sender: ws_tx,
-        command_sender: cmd_tx,
-    });
-
-    let mut vrm_manager = VrmManager::init_vrm_system(vrm_dto, unprocessed_reservations, simulator, registry, reservation_store.clone(), cmd_rx)
+    let mut vrm_manager = VrmManager::init_vrm_system(vrm_dto, unprocessed_reservations, simulator, registry, reservation_store.clone())
         .await
         .expect("Failed to initialize VRM system");
 
-    tokio::select! {
-        _ = start_web_server(app_state, 8080) => {
-            log::error!("Web server exited unexpectedly.");
-        }
-        _ = vrm_manager.run_vrm() => {
-            log::info!("VRM system loop finished.");
-        }
-    }
+    vrm_manager.run_vrm().await;
 }
 
 pub fn start_deadlock_detector() {

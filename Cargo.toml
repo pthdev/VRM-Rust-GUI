@@ -38,6 +38,8 @@ async-trait = "0.1.89"
 bimap = "0.6.3"
 logtest = "2.0.0"
 parking_lot = { version = "0.12", features = ["deadlock_detection"] }
+axum = { version = "0.8.9", features = ["ws"] }
+tower-http = { version = "0.7.1", features = ["cors"] }
 
 [profile.release]
 debug = true  

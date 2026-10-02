@@ -29,8 +29,17 @@ use crate::{
     },
 };
 
+pub enum VrmCommand {
+    SubmitReservation(ReservationId, i64),
+    PauseSimulation,
+    ResumeSimulation,
+}
+
 pub struct VrmManager {
     pub adc_master: VrmComponentProxy,
+
+    /// Channel for receiving external commands from GUI/API
+    pub command_receiver: tokio::sync::mpsc::Receiver<VrmCommand>,
 
     /// Reservation which were not submitted to the VRM system
     pub unprocessed_reservations: Vec<(ReservationId, i64)>,
@@ -52,9 +61,11 @@ impl VrmManager {
         unprocessed_reservations: Vec<(ReservationId, i64)>,
         reservation_store: ReservationStore,
         simulator: Arc<GlobalClock>,
+        command_receiver: tokio::sync::mpsc::Receiver<VrmCommand>,
     ) -> Self {
         VrmManager {
             adc_master,
+            command_receiver,
             unprocessed_reservations,
             open_reservations: Arc::new(RwLock::new(HashSet::new())),
             processed_reservations: Arc::new(RwLock::new(HashSet::new())),
@@ -74,6 +85,7 @@ impl VrmManager {
         simulator: Arc<GlobalClock>,
         registry: RegistryClient,
         reservation_store: ReservationStore,
+        command_receiver: tokio::sync::mpsc::Receiver<VrmCommand>,
     ) -> Result<Self, ConversionError> {
         let open_reservations = Arc::new(RwLock::new(HashSet::new()));
         let listener = Arc::new(RwLock::new(VrmStateListener::new(open_reservations.clone())));
@@ -160,6 +172,7 @@ impl VrmManager {
                     reservation_store.get_sorted_res_ids_with_arrival_time(unprocessed_reservations),
                     reservation_store,
                     simulator,
+                    command_receiver,
                 );
 
                 Ok(vrm_manager).map_err(|_| ConversionError::AdcConstructionError("Master-AcI".to_string()))
@@ -169,31 +182,52 @@ impl VrmManager {
     }
 
     pub async fn run_vrm(&mut self) {
-        // Submit all reservation to the VRM system.
-        while !self.unprocessed_reservations.is_empty() {
-            let (reservation_id, res_arrival_time) = self.unprocessed_reservations.remove(0);
-            let now = self.simulator.get_system_time_s();
-
-            if res_arrival_time > now {
-                let wait_seconds = res_arrival_time - now;
-                if wait_seconds > 0 {
-                    sleep(Duration::from_secs(wait_seconds as u64)).await;
+        let mut running = true;
+        // The VRM main loop - processing commands, reservations, and time
+        loop {
+            // 1. Process commands from GUI
+            while let std::result::Result::Ok(cmd) = self.command_receiver.try_recv() {
+                match cmd {
+                    VrmCommand::SubmitReservation(res_id, arrival_time) => {
+                        self.unprocessed_reservations.push((res_id, arrival_time));
+                        log::info!("GUI command: Added new reservation {:?}", self.reservation_store.get_name_for_key(res_id));
+                    }
+                    VrmCommand::PauseSimulation => {
+                        running = false;
+                        log::info!("GUI command: Simulation paused");
+                    }
+                    VrmCommand::ResumeSimulation => {
+                        running = true;
+                        log::info!("GUI command: Simulation resumed");
+                    }
                 }
             }
 
-            if !self.reservation_store.contains(reservation_id) {
-                panic!("Reservation {:?} was not added to the ReservationStore.", self.reservation_store.get_name_for_key(reservation_id));
+            if !running {
+                sleep(Duration::from_millis(100)).await;
+                continue;
             }
 
-            self.process_reservation(reservation_id).await;
-        }
-        log::info!("VrmManager: Submitted unprocessed reservations to the VRM system.");
-        self.close_open_links();
-        self.reservation_store.print_store_contents();
+            // 2. Submit all unprocessed reservations that have arrived
+            let mut pending = Vec::new();
+            while !self.unprocessed_reservations.is_empty() {
+                let (reservation_id, res_arrival_time) = self.unprocessed_reservations.remove(0);
+                let now = self.simulator.get_system_time_s();
 
-        // Transfer all reservation in a terminal reservation state.
-        // Workflows that have the proceeding state Commit, will not transfer immediately into a terminal state.
-        while !self.open_reservations.read().is_empty() {
+                if res_arrival_time <= now {
+                    if !self.reservation_store.contains(reservation_id) {
+                        panic!("Reservation {:?} was not added to the ReservationStore.", self.reservation_store.get_name_for_key(reservation_id));
+                    }
+                    self.process_reservation(reservation_id).await;
+                } else {
+                    pending.push((reservation_id, res_arrival_time));
+                }
+            }
+            self.unprocessed_reservations = pending;
+
+            self.close_open_links();
+
+            // 3. Transfer all reservation in a terminal reservation state
             let mut reservations_to_remove: Vec<ReservationId> = vec![];
             let open_ids: Vec<ReservationId> = self.open_reservations.read().iter().cloned().collect();
 
@@ -239,18 +273,19 @@ impl VrmManager {
                     }
                 }
             }
+
             // In simulation mode, advance the clock so tasks can progress through
             // their lifecycle (e.g., move from Committed → Finished).
             // In non-simulation mode, wait for real time to pass.
             if self.simulator.is_simulation {
-                self.simulator.tick_forward();
+                if !self.unprocessed_reservations.is_empty() || !self.open_reservations.read().is_empty() {
+                    self.simulator.tick_forward();
+                }
+                sleep(Duration::from_millis(50)).await;
             } else {
                 sleep(Duration::from_secs(5)).await;
             }
-            // self.reservation_store.print_store_contents();
         }
-
-        log::info!("VrmManager: All reservations in the VRM system reached a terminal state.")
     }
 
     /// Probes, Reserves, Commits or Deletes the submitted job
