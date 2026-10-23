@@ -23,7 +23,7 @@ impl ReservationNotificationListener for WebsocketStateListener {
             "type": "RESERVATION_STATE_CHANGED",
             "payload": {
                 "id": format!("{:?}", reservation_id),
-                "name": res_name,
+                "name": res_name.id, // Hier .id extrahieren, um ein Objekt im GUI zu vermeiden
                 "old_state": format!("{:?}", old_state),
                 "new_state": format!("{:?}", new_state),
             }

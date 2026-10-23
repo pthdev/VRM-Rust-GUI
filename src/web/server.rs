@@ -6,9 +6,13 @@ use axum::{
 use tokio::sync::{broadcast, mpsc};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
+use serde::Deserialize;
 
 use crate::vrm::reservation::reservation_store::ReservationStore;
 use crate::vrm::vrm_manager::VrmCommand;
+use crate::schema::workflow_dto::WorkflowDto;
+use crate::vrm::workflow::workflow::Workflow;
+use crate::vrm::common::id::ClientId;
 
 pub struct AppState {
     pub reservation_store: ReservationStore,
@@ -37,10 +41,33 @@ async fn get_reservations(State(state): State<Arc<AppState>>) -> impl IntoRespon
     Json(serde_json::json!({ "status": "ok", "message": "Store accessed successfully." }))
 }
 
-async fn submit_workflow(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // Example endpoint to submit a command to the VrmManager
-    // In the future this should parse a JSON payload and add it to the ReservationStore
-    Json(serde_json::json!({ "status": "not_implemented", "message": "Workflow parsing logic needs to be added here." }))
+#[derive(Deserialize)]
+pub struct SubmitWorkflowRequest {
+    pub client_id: String,
+    pub workflow: WorkflowDto,
+}
+
+async fn submit_workflow(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<SubmitWorkflowRequest>,
+) -> impl IntoResponse {
+    let client_id = ClientId::new(payload.client_id);
+    let arrival_time = payload.workflow.arrival_time;
+
+    match Workflow::create_form_dto(payload.workflow, client_id, state.reservation_store.clone()) {
+        Ok(workflow_res_id) => {
+            // Sende den Befehl an die VRM Manager Event-Schleife
+            if let Err(e) = state.command_sender.send(VrmCommand::SubmitReservation(workflow_res_id, arrival_time)).await {
+                log::error!("Fehler beim Senden des Workflow-Befehls an den VrmManager: {:?}", e);
+                return Json(serde_json::json!({ "status": "error", "message": "Failed to queue workflow." }));
+            }
+            Json(serde_json::json!({ "status": "submitted", "reservation_id": format!("{:?}", workflow_res_id) }))
+        }
+        Err(e) => {
+            log::error!("Fehler beim Parsen des Workflows aus GUI: {:?}", e);
+            Json(serde_json::json!({ "status": "error", "message": format!("Invalid Workflow data: {:?}", e) }))
+        }
+    }
 }
 
 async fn pause_simulation(State(state): State<Arc<AppState>>) -> impl IntoResponse {
