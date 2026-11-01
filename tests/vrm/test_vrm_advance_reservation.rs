@@ -33,7 +33,7 @@ async fn test_probe() {
     let registry = RegistryClient::new();
     let simulator = Arc::new(GlobalClock::new(is_simulation));
 
-    let mut vrm_manager = VrmManager::init_vrm_system(vrm_dto, unprocessed_reservations, simulator, registry, store.clone())
+    let mut vrm_manager = VrmManager::init_vrm_system(vrm_dto, unprocessed_reservations, simulator, registry, store.clone(), tokio::sync::mpsc::channel(1).1)
         .await
         .expect("Failed to initialize VRM system");
 
@@ -65,7 +65,7 @@ async fn test_reserve() {
     let registry = RegistryClient::new();
     let simulator = Arc::new(GlobalClock::new(is_simulation));
 
-    let mut vrm_manager = VrmManager::init_vrm_system(vrm_dto, unprocessed_reservations, simulator, registry, store.clone())
+    let mut vrm_manager = VrmManager::init_vrm_system(vrm_dto, unprocessed_reservations, simulator, registry, store.clone(), tokio::sync::mpsc::channel(1).1)
         .await
         .expect("Failed to initialize VRM system");
 
@@ -97,7 +97,7 @@ async fn test_commit() {
     let registry = RegistryClient::new();
     let simulator = Arc::new(GlobalClock::new(is_simulation));
 
-    let mut vrm_manager = VrmManager::init_vrm_system(vrm_dto, unprocessed_reservations, simulator, registry, store.clone())
+    let mut vrm_manager = VrmManager::init_vrm_system(vrm_dto, unprocessed_reservations, simulator, registry, store.clone(), tokio::sync::mpsc::channel(1).1)
         .await
         .expect("Failed to initialize VRM system");
 

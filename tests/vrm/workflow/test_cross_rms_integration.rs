@@ -39,7 +39,7 @@ impl VrmTestHarness {
         let simulator = Arc::new(GlobalClock::new(is_simulation));
 
         let vrm_manager =
-            VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone()).await.expect("Failed to initialize VRM system");
+            VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone(), tokio::sync::mpsc::channel(1).1).await.expect("Failed to initialize VRM system");
 
         VrmTestHarness { store, workflow_res_id, vrm_manager }
     }
@@ -183,7 +183,7 @@ async fn test_single_rms_workflow_data_dependency() {
     let simulator = Arc::new(GlobalClock::new(true));
 
     let mut vrm_manager =
-        VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone()).await.expect("Failed to initialize VRM system");
+        VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone(), tokio::sync::mpsc::channel(1).1).await.expect("Failed to initialize VRM system");
 
     vrm_manager.run_vrm().await;
 
@@ -281,7 +281,7 @@ async fn test_single_rms_co_allocation() {
     let simulator = Arc::new(GlobalClock::new(true));
 
     let mut vrm_manager =
-        VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone()).await.expect("Failed to initialize VRM system");
+        VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone(), tokio::sync::mpsc::channel(1).1).await.expect("Failed to initialize VRM system");
 
     vrm_manager.run_vrm().await;
 
@@ -377,7 +377,7 @@ async fn test_workflow_deadline_exceeded_rejected() {
     let simulator = Arc::new(GlobalClock::new(true));
 
     let mut vrm_manager =
-        VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone()).await.expect("Failed to initialize VRM system");
+        VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone(), tokio::sync::mpsc::channel(1).1).await.expect("Failed to initialize VRM system");
 
     vrm_manager.run_vrm().await;
 
@@ -460,7 +460,7 @@ async fn test_workflow_rejection_children_consistent() {
     let simulator = Arc::new(GlobalClock::new(true));
 
     let mut vrm_manager =
-        VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone()).await.expect("Failed to initialize VRM system");
+        VrmManager::init_vrm_system(vrm_dto, unprocessed, simulator, registry, store.clone(), tokio::sync::mpsc::channel(1).1).await.expect("Failed to initialize VRM system");
 
     vrm_manager.run_vrm().await;
 
