@@ -396,9 +396,11 @@ impl VrmManager {
                 guard.insert(process_res_id);
 
                 // Add all workflow sub-jobs to the open_reservation list (these are properly not in state committed)
-                if let Some(w_sub_jobs) = self.reservation_store.get_workflow_res_ids(process_res_id) {
-                    for w_sub_job in w_sub_jobs {
-                        guard.insert(w_sub_job);
+                if self.reservation_store.is_workflow(process_res_id) {
+                    if let Some(w_sub_jobs) = self.reservation_store.get_workflow_res_ids(process_res_id) {
+                        for w_sub_job in w_sub_jobs {
+                            guard.insert(w_sub_job);
+                        }
                     }
                 }
                 log::info!("Reservation {:?} was committed successful.", self.reservation_store.get_name_for_key(process_res_id));
