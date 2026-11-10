@@ -17,6 +17,9 @@ function App() {
   // State für das Eingabe-Modal (File-Upload / JSON Modus)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [jsonText, setJsonText] = useState('');
+
+  // Toggle für Netzwerk-Links
+  const [showLinks, setShowLinks] = useState(false);
   
   const wsRef = useRef(null);
 
@@ -139,6 +142,19 @@ function App() {
           </div>
           
           <div className="flex gap-4">
+            {/* Toggle für Netzwerk-Links */}
+            <div className="flex items-center gap-2 mr-4">
+              <label className="text-sm text-gray-700 cursor-pointer flex items-center gap-2">
+                <input 
+                  type="checkbox"
+                  checked={showLinks}
+                  onChange={(e) => setShowLinks(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                Netzwerk-Links anzeigen
+              </label>
+            </div>
+
             {/* Demo-Modus
                 Future Work: evt. "Maintenance Mode" mit Admin-Rechten? */}
             {IS_DEMO_MODE && (
@@ -187,6 +203,24 @@ function App() {
                   </tr>
                 ) : (
                   Object.values(reservations)
+                    .filter((res) => {
+                      // Filter-Logik: Blende Netzwerk-Links aus, wenn showLinks = false ist
+                      if (showLinks) return true;
+                      
+                      const nameStr = String(res.name);
+                      // Wenn der Name .data. oder .sync. enthält oder mit "Original-Res" beginnt, 
+                      // handelt es sich um eine virtuelle Netzwerk-Reservierung
+                      if (nameStr.includes('.data.') || nameStr.includes('.sync.') || nameStr.includes('Original-Res:')) {
+                        return false;
+                      }
+                      
+                      // Auch die abstrakten Dependency-Graphen ("WorkflowName.TaskName.out_A") ausblenden
+                      if (nameStr.includes('.out_') || nameStr.includes('.in_')) {
+                        return false;
+                      }
+                      
+                      return true;
+                    })
                     .sort((a, b) => b.lastUpdate.localeCompare(a.lastUpdate))
                     .map((res) => (
                       <tr key={res.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
