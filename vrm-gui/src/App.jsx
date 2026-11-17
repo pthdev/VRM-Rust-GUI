@@ -14,6 +14,10 @@ function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [simulationStatus, setSimulationStatus] = useState('running');
   
+  // Login State
+  const [clientId, setClientId] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   // State für das Eingabe-Modal (File-Upload / JSON Modus)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [jsonText, setJsonText] = useState('');
@@ -85,6 +89,8 @@ function App() {
       // Versuche das JSON aus dem Textfeld zu parsen
       try {
         customWorkflow = JSON.parse(jsonText);
+        // Überschreibe die client_id im JSON mit der angemeldeten ID
+        customWorkflow.client_id = clientId;
       } catch (err) {
         alert("Fehler: Das eingegebene JSON ist ungültig. Bitte korrigieren.");
         return;
@@ -127,6 +133,40 @@ function App() {
     return 'bg-yellow-100 text-yellow-800';
   };
 
+    if (!isLoggedIn) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 border border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">VRM System Login</h2>
+            
+            <div className="bg-blue-50 text-blue-800 text-sm p-4 rounded-lg mb-6">
+              <p><strong>Info:</strong>Die Client-ID wird an Workflows angehängt.</p>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); if (clientId.trim()) setIsLoggedIn(true); }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Client ID (Benutzername)</label>
+                <input 
+                  type="text" 
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  placeholder="Client-ID eingeben"
+                  className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+              </div>
+              <button 
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors cursor-pointer"
+              >
+                Anmelden
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
   return (
     <div className="min-h-screen p-8 font-sans">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -137,7 +177,17 @@ function App() {
             <h1 className="text-3xl font-bold text-gray-800">VRM System Dashboard</h1>
             <div className="flex items-center gap-2 mt-2 text-sm">
               <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-gray-600">{isConnected ? 'Verbunden' : 'Getrennt (Verbinde neu...)'}</span>
+              <span className="text-gray-600 mr-4">{isConnected ? 'Verbunden' : 'Getrennt (Verbinde neu...)'}</span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-600 ml-4">
+                Angemeldet als: <strong className="text-gray-800">{clientId}</strong>
+              </span>
+              <button 
+                onClick={() => { setIsLoggedIn(false); setClientId(''); }}
+                className="ml-2 text-xs text-blue-600 hover:text-blue-800 underline cursor-pointer"
+              >
+                Logout
+              </button>
             </div>
           </div>
           
