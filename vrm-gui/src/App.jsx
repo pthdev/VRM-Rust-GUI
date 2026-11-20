@@ -24,6 +24,7 @@ function App() {
 
   // Toggle für Netzwerk-Links
   const [showLinks, setShowLinks] = useState(false);
+  const [negotiationData, setNegotiationData] = useState(null);
   
   const wsRef = useRef(null);
 
@@ -276,10 +277,32 @@ function App() {
                       <tr key={res.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                         <td className="p-4 text-sm font-mono text-gray-500">{res.id}</td>
                         <td className="p-4 text-sm font-medium text-gray-800">{String(res.name)}</td>
-                        <td className="p-4">
+                        <td className="p-4 flex items-center gap-2">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStateBadgeColor(res.state)}`}>
                             {String(res.state)}
                           </span>
+                          {/* MOCK: Lösungs-Button einblenden, wenn Rejected und es sich um den Root-Workflow oder einen echten Task handelt */}
+                          {String(res.state) === "Rejected" && 
+                           !String(res.name).includes("Original-Res") && 
+                           !String(res.name).includes(".data.") &&
+                           !String(res.name).includes(".sync.") &&
+                           !String(res.name).includes(".out_") &&
+                           !String(res.name).includes(".in_") && (
+                            <button 
+                              onClick={() => setNegotiationData({
+                                id: res.id,
+                                name: res.name,
+                                reason: "ERR_INSUFFICIENT_CAPACITY: Für das gewählte Zeitfenster (Deadline) stehen nicht genügend freie CPUs zur Verfügung.",
+                                proposals: [
+                                  { id: 1, title: "Zeitfenster verschieben", desc: "Bsp.: Start in 2 Stunden möglich. Deadline verschiebt sich entsprechend.", action: "Verschieben" },
+                                  { id: 2, title: "Moldable Job anpassen", desc: "Bsp.: Dauer verdoppeln, dafür nur die halbe Anzahl an CPUs anfordern.", action: "Anpassen" }
+                                ]
+                              })}
+                              className="text-xs bg-red-50 text-red-600 border border-red-200 px-2 py-1 rounded hover:bg-red-100 cursor-pointer"
+                            >
+                              💡 Lösungen finden
+                            </button>
+                          )}
                         </td>
                         <td className="p-4 text-sm text-gray-500">{res.lastUpdate}</td>
                       </tr>
@@ -355,6 +378,59 @@ function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Negotiation Mock Modal */}
+      {negotiationData && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 border-t-4 border-red-500">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <span className="text-red-500">⚠️</span> Einplanung fehlgeschlagen
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">Betrifft: {negotiationData.name}</p>
+              </div>
+              <button onClick={() => setNegotiationData(null)} className="text-gray-400 hover:text-gray-700 cursor-pointer text-xl font-bold">&times;</button>
+            </div>
+            
+            <div className="bg-red-50 text-red-800 p-3 rounded-lg text-sm mb-6 border border-red-100">
+              <strong>Grund:</strong> {negotiationData.reason}
+            </div>
+
+            <h4 className="font-semibold text-gray-700 mb-3 text-sm">Lösungsvorschläge vom Scheduler (Mock):</h4>
+            
+            <div className="space-y-3">
+              {negotiationData.proposals.map(prop => (
+                <div key={prop.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors flex justify-between items-center group">
+                  <div>
+                    <h5 className="font-medium text-gray-800 text-sm">{prop.title}</h5>
+                    <p className="text-xs text-gray-500 mt-1">{prop.desc}</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      alert(`Mock: Akzeptiere Vorschlag '${prop.title}'. Das Frontend würde nun ein neues Submit mit angepassten Metadaten (Deadline/CPUs) senden.`);
+                      setNegotiationData(null);
+                    }}
+                    className="px-3 py-1.5 bg-white border border-blue-600 text-blue-600 text-sm font-medium rounded hover:bg-blue-600 hover:text-white transition-colors cursor-pointer"
+                  >
+                    {prop.action}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-100 flex justify-between items-center">
+              <span className="text-xs text-gray-400 italic">Dieses Feature demonstriert das Negotiation-Pattern.</span>
+              <button 
+                onClick={() => setNegotiationData(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium text-sm cursor-pointer"
+              >
+                Abbrechen
+              </button>
+            </div>
           </div>
         </div>
       )}
